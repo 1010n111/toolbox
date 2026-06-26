@@ -1,0 +1,9 @@
+{
+    "id": "simple-notebook",
+    "name": "简易笔记本",
+    "version": "1.0.0",
+    "description": "一个简单的本地笔记工具",
+    "author": "ToolBox",
+    "icon": "icon.png",
+    "permissions": []
+}

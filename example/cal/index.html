@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>单价比价器</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+    min-height: 100vh;
+  }
+  h2 {
+    margin: 0 0 20px 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a2e;
+    text-align: center;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    margin-bottom: 16px;
+  }
+  .row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .row input, .row select {
+    padding: 12px 14px;
+    font-size: 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    background: #fafbfc;
+  }
+  .row input:focus, .row select:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  }
+  .row input[type=text] { flex: 1 1 100%; }
+  .row .num { flex: 1 1 70px; min-width: 70px; }
+  button {
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    background: #6366f1;
+    color: white;
+  }
+  button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+  }
+  button:active {
+    transform: translateY(0);
+  }
+  button.secondary {
+    background: #f1f5f9;
+    color: #475569;
+  }
+  button.secondary:hover {
+    background: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  button.danger {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+  button.danger:hover {
+    background: #fecaca;
+    box-shadow: 0 4px 12px rgba(220,38,38,0.2);
+  }
+  .group { margin-top: 8px; }
+  .group h3 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+  }
+  .item:hover {
+    background: #f1f5f9;
+  }
+  .item.best {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  }
+  .item .up {
+    font-weight: 700;
+    color: #1a1a2e;
+    font-variant-numeric: tabular-nums;
+  }
+  .item button {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #10b981;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-left: 6px;
+  }
+  .item-info {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.5;
+  }
+  .item-name {
+    font-weight: 600;
+    color: #1e293b;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<h2>单价比价器</h2>
+<div class="card">
+  <div class="row"><input type="text" id="name" placeholder="商品名称（可选）"></div>
+  <div class="row">
+    <input type="number" class="num" id="price" placeholder="总价" step="any" min="0">
+    <input type="number" class="num" id="qty" placeholder="规格" step="any" min="0">
+    <select id="unit">
+      <option>g</option><option>kg</option><option>ml</option><option>L</option><option>个</option>
+    </select>
+    <button onclick="addProduct()">添加</button>
+  </div>
+</div>
+
+<div id="list"></div>
+
+<div class="card" style="padding-top: 12px; padding-bottom: 12px;">
+  <div class="row" style="margin: 0; justify-content: space-between;">
+    <span style="color: #94a3b8; font-size: 13px;">
+      <span style="display: inline-flex; align-items: center; gap: 6px;">
+        <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></span>
+        同维度商品自动比价，标有 🏆 的为最低价
+      </span>
+    </span>
+    <button class="danger" onclick="clearAll()">清空全部</button>
+  </div>
+</div>
+
+<script>
+// ===== 计算核心 =====
+const UNITS = {
+  g:  { dim:'weight', factor:1 },
+  kg: { dim:'weight', factor:1000 },
+  ml: { dim:'volume', factor:1 },
+  L:  { dim:'volume', factor:1000 },
+  '个':{ dim:'count',  factor:1 },
+};
+
+function unitPrice(p) {
+  return p.price / (p.qty * UNITS[p.unit].factor);
+}
+
+function groupAndMark(products) {
+  const groups = {};
+  products.forEach(p => {
+    const dim = UNITS[p.unit].dim;
+    (groups[dim] = groups[dim] || { items: [], minIndex: 0 }).items.push(p);
+  });
+  Object.values(groups).forEach(g => {
+    let min = Infinity;
+    g.items.forEach((p, i) => {
+      const up = unitPrice(p);
+      if (up < min) { min = up; g.minIndex = i; }
+    });
+  });
+  return groups;
+}
+
+function validProduct(p) {
+  return UNITS[p.unit] != null && p.price > 0 && p.qty > 0;
+}
+
+function extractText(resp) {
+  // 防御式：遍历响应里所有 content 项，拼接 text 字段
+  let out = '';
+  const walk = (node) => {
+    if (node == null) return;
+    if (typeof node === 'string') return;
+    if (Array.isArray(node)) { node.forEach(walk); return; }
+    if (typeof node.text === 'string') out += node.text;
+    if (node.content) walk(node.content);
+    if (node.output) walk(node.output);
+  };
+  walk(resp);
+  return out;
+}
+
+function parseProduct(text) {
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return {};
+  let o; try { o = JSON.parse(m[0]); } catch { return {}; }
+  return {
+    name: typeof o.name === 'string' ? o.name : '',
+    price: o.price,
+    qty: o.qty,
+    unit: UNITS[o.unit] ? o.unit : '',
+  };
+}
+
+// ===== UI + 存储 =====
+const DIM_LABEL = { weight:'重量（元/g）', volume:'容量（元/ml）', count:'数量（元/个）' };
+let products = [];
+
+function save() { localStorage.setItem('products', JSON.stringify(products)); }
+function load() { try { products = JSON.parse(localStorage.getItem('products')) || []; } catch { products = []; } }
+
+function addProduct() {
+  const p = {
+    name: document.getElementById('name').value.trim(),
+    price: parseFloat(document.getElementById('price').value),
+    qty: parseFloat(document.getElementById('qty').value),
+    unit: document.getElementById('unit').value,
+  };
+  if (!validProduct(p)) { alert('总价和规格必须是正数'); return; }
+  products.push(p);
+  save();
+  document.getElementById('name').value = '';
+  document.getElementById('price').value = '';
+  document.getElementById('qty').value = '';
+  render();
+}
+
+function removeProduct(i) { products.splice(i, 1); save(); render(); }
+function clearAll() { if (confirm('清空全部？')) { products = []; save(); render(); } }
+
+function render() {
+  const groups = groupAndMark(products);
+  const el = document.getElementById('list');
+  el.innerHTML = '';
+
+  if (products.length === 0) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = '<div class="empty-state">暂无商品，添加后将按重量/容量/数量分组并自动比价</div>';
+    el.appendChild(card);
+    return;
+  }
+
+  Object.keys(groups).forEach(dim => {
+    const g = groups[dim];
+    const card = document.createElement('div');
+    card.className = 'card group';
+    card.innerHTML = '<h3>' + DIM_LABEL[dim] + '</h3>';
+    g.items.forEach((p, i) => {
+      const gi = products.indexOf(p);
+      const best = i === g.minIndex;
+      const div = document.createElement('div');
+      div.className = 'item' + (best ? ' best' : '');
+      div.innerHTML =
+        '<div class="item-info"><span class="item-name">' + (p.name || '(未命名)') + '</span>' +
+        ' — ' + p.price + '元/' + p.qty + p.unit +
+        '<br><span class="up">单价: ' + unitPrice(p).toFixed(4) + ' 元/' + (dim === 'count' ? '个' : (dim === 'weight' ? 'g' : 'ml')) + '</span>' +
+        (best ? '<span class="badge">🏆 最便宜</span>' : '') + '</div>' +
+        '<button class="danger" onclick="removeProduct(' + gi + ')">删除</button>';
+      card.appendChild(div);
+    });
+    el.appendChild(card);
+  });
+}
+
+// ===== 截图提取（火山引擎）=====
+const ARK_URL = 'https://ark.cn-beijing.volces.com/api/v3/responses';
+const ARK_MODEL = 'doubao-seed-2-0-mini-260428';
+const PROMPT = '识别图中商品，只返回一个严格JSON对象，不要任何多余文字：{"name":商品名,"price":总价数字,"qty":规格数字,"unit":单位}。unit只能是 g/kg/ml/L/个 之一。识别不到的字段留空字符串。';
+
+function getKey() { return localStorage.getItem('ark_key') || ''; }
+function setKey() {
+  const k = prompt('粘贴火山引擎 ARK_API_KEY：', getKey());
+  if (k != null) localStorage.setItem('ark_key', k.trim());
+}
+
+function fileToDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function fillForm(o) {
+  if (o.name) document.getElementById('name').value = o.name;
+  if (o.price != null && o.price !== '') document.getElementById('price').value = o.price;
+  if (o.qty != null && o.qty !== '') document.getElementById('qty').value = o.qty;
+  if (o.unit) document.getElementById('unit').value = o.unit;
+}
+
+async function onPickImage(file) {
+  if (!file) return;
+  const key = getKey();
+  if (!key) { alert('请先点「设置Key」填入火山引擎 ARK_API_KEY'); return; }
+  const status = document.getElementById('status');
+  status.textContent = '识别中…';
+  try {
+    const dataURL = await fileToDataURL(file);
+    const resp = await fetch(ARK_URL, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: ARK_MODEL,
+        input: [ { role:'user', content: [
+          { type:'input_image', image_url: dataURL },
+          { type:'input_text', text: PROMPT },
+        ] } ],
+      }),
+    });
+    const data = await resp.json();
+    console.log('ARK raw response:', data); // 首次核对响应结构
+    if (!resp.ok) { status.textContent = '失败: ' + ((data.error && data.error.message) || resp.status); return; }
+    const obj = parseProduct(extractText(data));
+    if (obj.price == null && obj.qty == null && !obj.name) { status.textContent = '没识别出数据，请手动输入'; return; }
+    fillForm(obj);
+    status.textContent = '已填入，请核对后点添加';
+  } catch (e) {
+    status.textContent = '出错(可能被CORS拦截): ' + e.message;
+    console.error(e);
+  } finally {
+    document.getElementById('img').value = '';
+  }
+}
+
+// ===== 自测：console 里调 runTests() =====
+function runTests() {
+  const eq = (a, b, msg) => { if (Math.abs(a - b) > 1e-9) throw new Error('FAIL ' + msg + ': ' + a + ' != ' + b); };
+  const ok = (c, msg) => { if (!c) throw new Error('FAIL ' + msg); };
+
+  eq(unitPrice({price:12, qty:500, unit:'g'}), 0.024, 'g单价');
+  eq(unitPrice({price:20, qty:1, unit:'kg'}), 0.02, 'kg单价');
+  eq(unitPrice({price:10, qty:1, unit:'L'}), 0.01, 'L单价');
+
+  const g1 = groupAndMark([
+    {name:'A', price:12, qty:500, unit:'g'},
+    {name:'B', price:20, qty:1, unit:'kg'},
+  ]);
+  ok(g1.weight, '有重量组');
+  eq(g1.weight.minIndex, 1, '重量组最低是B');
+
+  const g2 = groupAndMark([
+    {name:'米', price:50, qty:5, unit:'kg'},
+    {name:'蛋', price:12, qty:30, unit:'个'},
+  ]);
+  ok(g2.weight && g2.count, '分成两组');
+  ok(g2.weight.items.length === 1 && g2.count.items.length === 1, '各组一个');
+
+  ok(validProduct({price:1, qty:1, unit:'g'}), '合法');
+  ok(!validProduct({price:0, qty:1, unit:'g'}), '价0非法');
+  ok(!validProduct({price:1, qty:-2, unit:'g'}), '负规格非法');
+  ok(!validProduct({price:1, qty:1, unit:'斤'}), '未知单位非法');
+
+  const fakeResp = { output: [ { content: [ { type:'output_text', text:'{"name":"奶","price":12,"qty":500,"unit":"ml"}' } ] } ] };
+  ok(extractText(fakeResp).includes('奶'), 'extractText取文本');
+  const pp = parseProduct('好的：{"name":"奶","price":12,"qty":500,"unit":"ml"} 完成');
+  eq(pp.price, 12, 'parse price'); eq(pp.qty, 500, 'parse qty'); ok(pp.unit === 'ml', 'parse unit');
+  const pp2 = parseProduct('{"name":"x","price":1,"qty":1,"unit":"瓶"}');
+  ok(pp2.unit === '', '未知单位置空');
+
+  console.log('ALL TESTS PASSED');
+}
+
+// 启动
+if (typeof document !== 'undefined') { load(); render(); }
+if (typeof module !== 'undefined') { module.exports = { UNITS, unitPrice, groupAndMark, validProduct, extractText, parseProduct, runTests }; }
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+    "id": "cal",
+    "name": "计算单价",
+    "version": "1.0.0",
+    "description": "计算单价",
+    "author": "ToolBox",
+    "icon": "icon.png",
+    "permissions": []
+}

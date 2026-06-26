@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 锤子木柄 -->
+    <path
+        android:fillColor="#8D6E63"
+        android:pathData="M30,32L66,68L70,64L34,28L30,32Z"/>
+    <!-- 锤子金属头 -->
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M26,26L38,26L38,38L26,38L26,26Z"/>
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M26,26L32,26L32,38L26,38L26,26Z"/>
+    <!-- 镰刀木柄 -->
+    <path
+        android:fillColor="#8D6E63"
+        android:pathData="M42,72L74,40L78,44L46,76L42,72Z"/>
+    <!-- 镰刀金属刀刃 -->
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M74,32C82,32 86,40 86,48C86,56 78,64 70,68L78,44L74,40L74,32Z"/>
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M74,32L80,32L80,38L76,38L74,36L74,32Z"/>
+    <!-- 交叉中心点装饰 -->
+    <path
+        android:fillColor="#FFD700"
+        android:pathData="M50,50L58,50L58,58L50,58L50,50Z"/>
+    <!-- 中心高光 -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M52,52L56,52L56,56L52,56L52,52Z"/>
+</vector>

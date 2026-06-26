@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="工具信息"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"
+            android:textColor="#212121" />
+
+        <!-- 图标颜色选择 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="图标颜色"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"
+            android:textColor="#757575" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="20dp"
+            android:id="@+id/color_container">
+
+            <View
+                android:id="@+id/color_red"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/square_color"
+                android:tag="#F44336" />
+
+            <View
+                android:id="@+id/color_orange"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/square_color"
+                android:tag="#FF9800" />
+
+            <View
+                android:id="@+id/color_yellow"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/square_color"
+                android:tag="#FFEB3B" />
+
+            <View
+                android:id="@+id/color_green"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/square_color"
+                android:tag="#4CAF50" />
+
+            <View
+                android:id="@+id/color_blue"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/square_color"
+                android:tag="#2196F3" />
+
+            <View
+                android:id="@+id/color_indigo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/square_color"
+                android:tag="#3F51B5" />
+
+            <View
+                android:id="@+id/color_purple"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="4dp"
+                android:background="@drawable/square_color"
+                android:tag="#9C27B0" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:boxStrokeColor="#1976D2"
+            app:hintTextColor="#1976D2">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_tool_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="工具 ID"
+                android:inputType="text"
+                android:maxLines="1"
+                android:focusable="false"
+                android:clickable="false"
+                android:textColor="#999999" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:boxStrokeColor="#1976D2"
+            app:hintTextColor="#1976D2">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_tool_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="工具名称 *"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:boxStrokeColor="#1976D2"
+            app:hintTextColor="#1976D2">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_tool_version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="版本号"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:boxStrokeColor="#1976D2"
+            app:hintTextColor="#1976D2">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_tool_author"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="作者"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:boxStrokeColor="#1976D2"
+            app:hintTextColor="#1976D2">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_tool_desc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="描述"
+                android:inputType="textMultiLine"
+                android:minLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="保存"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1976D2" />
+
+    </LinearLayout>
+</ScrollView>

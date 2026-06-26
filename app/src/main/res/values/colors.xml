@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色调 - 蓝色 -->
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="primary_light">#42A5F5</color>
+
+    <!-- 次色调 - 蓝绿 -->
+    <color name="secondary">#26A69A</color>
+
+    <!-- 危险色 -->
+    <color name="error">#D32F2F</color>
+
+    <!-- 背景色 -->
+    <color name="background">#FFFFFF</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F5F5F5</color>
+
+    <!-- 文本色 -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_background">#212121</color>
+    <color name="on_surface">#212121</color>
+    <color name="text_secondary">#757575</color>
+
+    <!-- 分割线 -->
+    <color name="divider">#E0E0E0</color>
+</resources>

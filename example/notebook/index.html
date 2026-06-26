@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简易笔记本</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 16px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h3 {
+            color: #333;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            background: white;
+        }
+        textarea:focus {
+            border-color: #1976D2;
+        }
+        .buttons {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #1976D2;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1565C0;
+        }
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #616161;
+        }
+        .status {
+            margin-top: 12px;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>简易笔记本</h3>
+        <textarea id="editor" placeholder="在这里输入内容..."></textarea>
+        <div class="buttons">
+            <button class="btn-primary" onclick="saveNote()">保存</button>
+            <button class="btn-secondary" onclick="loadNote()">加载</button>
+        </div>
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        function showStatus(msg, duration = 2000) {
+            document.getElementById('status').textContent = msg;
+            setTimeout(() => {
+                document.getElementById('status').textContent = '';
+            }, duration);
+        }
+
+        function saveNote() {
+            var content = document.getElementById('editor').value;
+            if (typeof window.ToolBridge !== 'undefined') {
+                window.ToolBridge.writeFile('data/note.txt', content, function(success) {
+                    if (success === 'true') {
+                        window.$box.toast('保存成功');
+                        showStatus('已保存');
+                    } else {
+                        window.$box.toast('保存失败');
+                    }
+                });
+            } else {
+                localStorage.setItem('note', content);
+                showStatus('已保存到本地存储');
+            }
+        }
+
+        function loadNote() {
+            if (typeof window.ToolBridge !== 'undefined') {
+                window.ToolBridge.readFile('data/note.txt', function(content) {
+                    document.getElementById('editor').value = content || '';
+                    showStatus(content ? '已加载' : '无已保存内容');
+                });
+            } else {
+                document.getElementById('editor').value = localStorage.getItem('note') || '';
+                showStatus('从本地存储加载');
+            }
+        }
+
+        window.onload = function() {
+            loadNote();
+        };
+    </script>
+</body>
+</html>

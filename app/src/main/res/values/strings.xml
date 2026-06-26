@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">ToolBox</string>
+    <string name="import_tool">导入工具</string>
+    <string name="no_tools">暂无工具</string>
+    <string name="tap_to_import">点击右上角 + 按钮导入工具</string>
+    <string name="importing">正在导入...</string>
+    <string name="import_success">导入成功</string>
+    <string name="import_failed">导入失败</string>
+    <string name="delete_confirm">确定要删除「%1$s」吗？工具数据也会被删除。</string>
+    <string name="delete">删除</string>
+    <string name="cancel">取消</string>
+    <string name="deleted">已删除</string>
+    <string name="exporting">正在导出...</string>
+    <string name="export_success">导出成功</string>
+    <string name="export_failed">导出失败</string>
+    <string name="open">打开</string>
+    <string name="export">导出</string>
+    <string name="add_to_desktop">添加到桌面</string>
+</resources>
