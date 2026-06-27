@@ -10,5 +10,6 @@ data class ToolInfo(
     val iconColor: String,
     val dirPath: String,
     val installedAt: Long,
-    val permissions: List<String> = emptyList()
+    val permissions: List<String> = emptyList(),
+    val downloadUrl: String = ""
 )

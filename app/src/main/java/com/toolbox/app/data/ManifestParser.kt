@@ -17,6 +17,7 @@ object ManifestParser {
             val author = json.optString("author", "Unknown")
             val icon = json.optString("icon", "")
             val iconColor = json.optString("iconColor", "#FF5722")
+            val downloadUrl = json.optString("downloadUrl", "")
 
             val permissions = mutableListOf<String>()
             val permArray = json.optJSONArray("permissions")
@@ -36,7 +37,8 @@ object ManifestParser {
                 iconColor = iconColor,
                 dirPath = dirPath,
                 installedAt = System.currentTimeMillis(),
-                permissions = permissions
+                permissions = permissions,
+                downloadUrl = downloadUrl
             )
         }
     }
