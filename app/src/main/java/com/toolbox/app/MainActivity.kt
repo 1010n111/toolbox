@@ -85,6 +85,10 @@ class MainActivity : AppCompatActivity() {
                 startImportPicker()
                 true
             }
+            R.id.action_online_download -> {
+                startActivity(Intent(this, DownloadActivity::class.java))
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -139,6 +143,7 @@ class MainActivity : AppCompatActivity() {
     private fun showToolActions(tool: ToolInfo) {
         val items = arrayOf(
             getString(R.string.open),
+            getString(R.string.details),
             getString(R.string.export),
             getString(R.string.delete),
             getString(R.string.add_to_desktop),
@@ -150,13 +155,21 @@ class MainActivity : AppCompatActivity() {
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> openTool(tool)
-                    1 -> exportTool(tool)
-                    2 -> confirmDelete(tool)
-                    3 -> createShortcut(tool)
-                    4 -> openEditTool(tool)
+                    1 -> openToolDetail(tool)
+                    2 -> exportTool(tool)
+                    3 -> confirmDelete(tool)
+                    4 -> createShortcut(tool)
+                    5 -> openEditTool(tool)
                 }
             }
             .show()
+    }
+
+    private fun openToolDetail(tool: ToolInfo) {
+        val intent = Intent(this, ToolDetailActivity::class.java).apply {
+            putExtra("tool_id", tool.id)
+        }
+        startActivity(intent)
     }
 
     private fun openEditTool(tool: ToolInfo) {

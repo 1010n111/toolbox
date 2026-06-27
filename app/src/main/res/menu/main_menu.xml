@@ -8,4 +8,9 @@
         android:title="@string/import_tool"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/action_online_download"
+        android:title="@string/online_download"
+        app:showAsAction="never" />
+
 </menu>

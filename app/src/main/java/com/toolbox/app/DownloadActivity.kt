@@ -18,6 +18,14 @@ class DownloadActivity : AppCompatActivity() {
     private lateinit var btnDownload: Button
     private var isDownloading = false
 
+    // For update flow: when we already have the temp zip downloaded
+    private val existingTempZipPath: String? by lazy {
+        intent.getStringExtra("temp_zip_path")
+    }
+    private val overwriteToolId: String? by lazy {
+        intent.getStringExtra("overwrite_tool_id")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_download)
@@ -27,6 +35,15 @@ class DownloadActivity : AppCompatActivity() {
 
         inputUrl = findViewById(R.id.input_url)
         btnDownload = findViewById(R.id.btn_download)
+
+        // If we came from an update check with existing temp zip, go straight to import
+        if (!existingTempZipPath.isNullOrEmpty()) {
+            val tempFile = File(existingTempZipPath!!)
+            if (tempFile.exists()) {
+                startImportActivity(tempFile, !overwriteToolId.isNullOrEmpty())
+                return
+            }
+        }
 
         // URL 输入变化监听
         inputUrl.addTextChangedListener(object : android.text.TextWatcher {
@@ -55,7 +72,7 @@ class DownloadActivity : AppCompatActivity() {
             try {
                 val file = downloadFile(url)
                 runOnUiThread {
-                    startImportActivity(file)
+                    startImportActivity(file, false)
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -88,9 +105,12 @@ class DownloadActivity : AppCompatActivity() {
         }
     }
 
-    private fun startImportActivity(file: File) {
+    private fun startImportActivity(file: File, isUpdateOverwrite: Boolean) {
         val intent = Intent(this, ImportActivity::class.java).apply {
             data = Uri.fromFile(file)
+            if (isUpdateOverwrite) {
+                putExtra("overwrite_tool_id", overwriteToolId)
+            }
         }
         startActivity(intent)
         finish()

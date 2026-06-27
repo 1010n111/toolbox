@@ -49,6 +49,11 @@
             android:name=".DownloadActivity"
             android:exported="false"
             android:label="@string/online_download" />
+
+        <activity
+            android:name=".ToolDetailActivity"
+            android:exported="false"
+            android:label="@string/tool_detail" />
     </application>
 
 </manifest>

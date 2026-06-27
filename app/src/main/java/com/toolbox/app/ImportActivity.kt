@@ -23,13 +23,16 @@ class ImportActivity : AppCompatActivity() {
     private var hasManifest = false
     private var selectedColor: String = "#FF5722"
     private var selectedColorView: View? = null
+    private val overwriteToolId: String? by lazy {
+        intent.getStringExtra("overwrite_tool_id")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_import)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "导入工具"
+        supportActionBar?.title = if (overwriteToolId != null) "更新工具" else "导入工具"
 
         toolManager = ToolManager(this)
 
@@ -149,19 +152,29 @@ class ImportActivity : AppCompatActivity() {
         val json = manifestFile.readText()
         try {
             val obj = org.json.JSONObject(json)
-            // 用短UUID确保唯一，不读取manifest里的id
-            val shortUuid = java.util.UUID.randomUUID().toString().substring(0, 8)
+            // For overwrite/update: use the existing tool ID, don't generate a new one
+            val id = overwriteToolId ?: run {
+                // 用短UUID确保唯一，不读取manifest里的id
+                java.util.UUID.randomUUID().toString().substring(0, 8)
+            }
             val name = obj.optString("name", "")
             val version = obj.optString("version", "1.0.0")
             val author = obj.optString("author", "")
             val desc = obj.optString("description", "")
+            val iconColor = obj.optString("iconColor", "#FF5722")
 
             runOnUiThread {
-                findViewById<TextInputEditText>(R.id.input_tool_id).setText(shortUuid)
+                findViewById<TextInputEditText>(R.id.input_tool_id).setText(id)
                 findViewById<TextInputEditText>(R.id.input_tool_name).setText(name)
                 findViewById<TextInputEditText>(R.id.input_tool_version).setText(version)
                 findViewById<TextInputEditText>(R.id.input_tool_author).setText(author)
                 findViewById<TextInputEditText>(R.id.input_tool_desc).setText(desc)
+                // Try to use the existing icon color from manifest
+                try {
+                    selectedColor = iconColor
+                    // We can't easily update the selection highlight here without refactoring, but it will be written correctly
+                } catch (_: Exception) {
+                }
             }
         } catch (e: Exception) {
             autoFillFromFileName()
@@ -243,10 +256,12 @@ class ImportActivity : AppCompatActivity() {
                 }
 
                 // 移动到工具目录
-                ToolManager(this).installFromTempDir(tempDir!!, id)
+                val overwrite = !overwriteToolId.isNullOrEmpty()
+                ToolManager(this).installFromTempDir(tempDir!!, id, overwrite)
 
                 runOnUiThread {
-                    Toast.makeText(this, "导入成功: $name", Toast.LENGTH_SHORT).show()
+                    val message = if (overwrite) "更新成功: $name" else "导入成功: $name"
+                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                     setResult(Activity.RESULT_OK)
                     finish()
                 }
