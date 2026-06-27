@@ -347,15 +347,16 @@ class RepositoryActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
         if (forceRefresh) {
             Toast.makeText(this, "正在刷新...", Toast.LENGTH_SHORT).show()
+            clearCache()  // 强制刷新时先清除缓存
         }
 
         Thread {
             try {
-                val tools = fetchRepositoryTools()
+                val tools = fetchRepositoryTools(forceNoCache = forceRefresh)
                 runOnUiThread {
                     cachedTools = tools
                     saveToCache(tools)
-                    adapter.submitList(tools)
+                    adapter.submitList(ArrayList(tools))  // 用新ArrayList确保DiffUtil检测到变化
                     progressBar.visibility = View.GONE
                     tvCacheHint.visibility = View.GONE
                     if (forceRefresh) {
@@ -380,7 +381,7 @@ class RepositoryActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun fetchRepositoryTools(): List<RepositoryTool> {
+    private fun fetchRepositoryTools(forceNoCache: Boolean = false): List<RepositoryTool> {
         val tools = mutableListOf<RepositoryTool>()
 
         // 方案1: 尝试从配置的 URL 获取工具列表 JSON
@@ -388,7 +389,7 @@ class RepositoryActivity : AppCompatActivity() {
         var useFallback = false
 
         try {
-            jsonStr = fetchText(repoApiUrl)
+            jsonStr = fetchText(repoApiUrl, forceNoCache)
         } catch (e: Exception) {
             Log.w("RepositoryActivity", "主仓库访问失败: ${e.message}，尝试备用地址")
             useFallback = true
@@ -397,7 +398,7 @@ class RepositoryActivity : AppCompatActivity() {
         // 方案2: 主仓库失败，尝试 GitHub 备用地址
         if (useFallback && repoApiUrl == DEFAULT_REPO_API_URL) {
             try {
-                jsonStr = fetchText(FALLBACK_REPO_API_URL)
+                jsonStr = fetchText(FALLBACK_REPO_API_URL, forceNoCache)
                 repoRawBase = FALLBACK_REPO_RAW_BASE
             } catch (e: Exception) {
                 Log.w("RepositoryActivity", "备用仓库也失败: ${e.message}，使用内置工具")
@@ -454,13 +455,28 @@ class RepositoryActivity : AppCompatActivity() {
         return fetchText(urlString)
     }
 
-    private fun fetchText(urlString: String): String {
-        Log.d("RepositoryActivity", "请求URL: $urlString")
-        val url = URL(urlString)
+    private fun fetchText(urlString: String, forceNoCache: Boolean = false): String {
+        // 强制刷新时添加时间戳绕过CDN缓存
+        val finalUrl = if (forceNoCache) {
+            val separator = if (urlString.contains("?")) "&" else "?"
+            "$urlString${separator}_t=${System.currentTimeMillis()}"
+        } else {
+            urlString
+        }
+        Log.d("RepositoryActivity", "请求URL: $finalUrl (noCache=$forceNoCache)")
+        val url = URL(finalUrl)
         val conn = url.openConnection() as HttpURLConnection
         conn.connectTimeout = 15000
         conn.readTimeout = 30000
         conn.instanceFollowRedirects = true  // 自动跟随重定向
+
+        // 禁用缓存，强制获取最新数据
+        if (forceNoCache) {
+            conn.useCaches = false
+            conn.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+            conn.setRequestProperty("Pragma", "no-cache")
+            conn.setRequestProperty("Expires", "0")
+        }
 
         // 添加完整的浏览器请求头，避免Gitee 403
         conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
@@ -476,7 +492,7 @@ class RepositoryActivity : AppCompatActivity() {
             val location = conn.getHeaderField("Location")
             Log.d("RepositoryActivity", "重定向到: $location")
             if (!location.isNullOrEmpty()) {
-                return fetchText(location)  // 递归请求重定向地址
+                return fetchText(location, forceNoCache)  // 递归请求重定向地址
             }
         }
 
