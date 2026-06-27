@@ -44,6 +44,11 @@
             android:name=".EditToolActivity"
             android:exported="false"
             android:label="编辑工具" />
+
+        <activity
+            android:name=".DownloadActivity"
+            android:exported="false"
+            android:label="@string/online_download" />
     </application>
 
 </manifest>
