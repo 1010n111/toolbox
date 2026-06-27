@@ -62,15 +62,20 @@ class ToolManager(private val context: Context) {
         }
     }
 
-    fun installFromTempDir(tempDir: File, toolId: String): ToolInfo {
-        android.util.Log.d("ToolManager", "installFromTempDir: ${tempDir.absolutePath}")
+    fun installFromTempDir(tempDir: File, toolId: String, overwrite: Boolean = false): ToolInfo {
+        android.util.Log.d("ToolManager", "installFromTempDir: ${tempDir.absolutePath}, overwrite=$overwrite")
         android.util.Log.d("ToolManager", "tempDir exists: ${tempDir.exists()}, isDir: ${tempDir.isDirectory}")
         tempDir.listFiles()?.forEach { f ->
             android.util.Log.d("ToolManager", "  - ${f.name}: ${f.length()} bytes")
         }
 
-        if (toolDir.toolExists(toolId)) {
+        if (!overwrite && toolDir.toolExists(toolId)) {
             throw Exception("工具已存在")
+        }
+
+        // 覆盖模式：先删除旧版本
+        if (overwrite && toolDir.toolExists(toolId)) {
+            deleteTool(toolId)
         }
 
         val manifestFile = File(tempDir, "manifest.json")
@@ -167,7 +172,8 @@ class ToolManager(private val context: Context) {
         version: String,
         author: String,
         description: String,
-        iconColor: String
+        iconColor: String,
+        downloadUrl: String = ""
     ): Boolean {
         val manifestFile = toolDir.getToolManifest(toolId)
         if (!manifestFile.exists()) return false
@@ -179,6 +185,21 @@ class ToolManager(private val context: Context) {
             json.put("author", author)
             json.put("description", description)
             json.put("iconColor", iconColor)
+            json.put("downloadUrl", downloadUrl)
+            manifestFile.writeText(json.toString(2))
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun updateDownloadUrl(toolId: String, downloadUrl: String): Boolean {
+        val manifestFile = toolDir.getToolManifest(toolId)
+        if (!manifestFile.exists()) return false
+
+        return try {
+            val json = org.json.JSONObject(manifestFile.readText())
+            json.put("downloadUrl", downloadUrl)
             manifestFile.writeText(json.toString(2))
             true
         } catch (e: Exception) {
