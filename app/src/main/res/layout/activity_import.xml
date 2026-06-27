@@ -85,6 +85,8 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:layout_marginBottom="20dp">
 
             <View
@@ -149,7 +151,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             app:boxStrokeColor="#1976D2"
-            app:hintTextColor="#1976D2">
+            app:hintTextColor="#1976D2"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#FAFAFA"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
+            app:boxStrokeErrorColor="#F44336">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_tool_id"
@@ -168,7 +175,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             app:boxStrokeColor="#1976D2"
-            app:hintTextColor="#1976D2">
+            app:hintTextColor="#1976D2"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#FAFAFA"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
+            app:boxStrokeErrorColor="#F44336">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_tool_name"
@@ -184,7 +196,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             app:boxStrokeColor="#1976D2"
-            app:hintTextColor="#1976D2">
+            app:hintTextColor="#1976D2"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#FAFAFA"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
+            app:boxStrokeErrorColor="#F44336">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_tool_version"
@@ -200,7 +217,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             app:boxStrokeColor="#1976D2"
-            app:hintTextColor="#1976D2">
+            app:hintTextColor="#1976D2"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#FAFAFA"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
+            app:boxStrokeErrorColor="#F44336">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_tool_author"
@@ -216,7 +238,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             app:boxStrokeColor="#1976D2"
-            app:hintTextColor="#1976D2">
+            app:hintTextColor="#1976D2"
+            app:boxBackgroundMode="filled"
+            app:boxBackgroundColor="#FAFAFA"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
+            app:boxStrokeErrorColor="#F44336">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/input_tool_desc"

@@ -39,6 +39,7 @@ class ToolDetailActivity : AppCompatActivity() {
     private lateinit var btnCheckUpdate: Button
     private lateinit var btnOpen: Button
     private lateinit var btnEdit: Button
+    private lateinit var btnOverwriteDownload: Button
 
     private var isCheckingUpdate = false
 
@@ -72,6 +73,7 @@ class ToolDetailActivity : AppCompatActivity() {
         inputDownloadUrl = findViewById(R.id.input_download_url)
         btnSaveLink = findViewById(R.id.btn_save_link)
         btnCheckUpdate = findViewById(R.id.btn_check_update)
+        btnOverwriteDownload = findViewById(R.id.btn_overwrite_download)
         btnOpen = findViewById(R.id.btn_open)
         btnEdit = findViewById(R.id.btn_edit)
     }
@@ -103,8 +105,9 @@ class ToolDetailActivity : AppCompatActivity() {
 
         inputDownloadUrl.setText(tool.downloadUrl)
 
-        // 如果有下载链接，启用检查更新按钮
+        // 如果有下载链接，启用检查更新和覆盖下载按钮
         btnCheckUpdate.isEnabled = tool.downloadUrl.isNotEmpty()
+        btnOverwriteDownload.isEnabled = tool.downloadUrl.isNotEmpty()
     }
 
     private fun setupListeners() {
@@ -156,6 +159,11 @@ class ToolDetailActivity : AppCompatActivity() {
         // 检查更新
         btnCheckUpdate.setOnClickListener {
             checkForUpdate()
+        }
+
+        // 覆盖下载
+        btnOverwriteDownload.setOnClickListener {
+            startOverwriteDownload()
         }
     }
 
@@ -310,6 +318,126 @@ class ToolDetailActivity : AppCompatActivity() {
         isCheckingUpdate = false
         btnCheckUpdate.isEnabled = currentTool?.downloadUrl?.isNotEmpty() == true
         btnCheckUpdate.text = getString(R.string.check_update)
+    }
+
+    private fun startOverwriteDownload() {
+        val url = currentTool?.downloadUrl?.trim() ?: return
+        if (url.isEmpty() || isCheckingUpdate) return
+
+        isCheckingUpdate = true
+        btnOverwriteDownload.isEnabled = false
+        btnOverwriteDownload.text = getString(R.string.downloading)
+        btnCheckUpdate.isEnabled = false
+
+        Thread {
+            try {
+                val file = downloadFileDirect(url)
+                runOnUiThread {
+                    startImportActivity(file, true)
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this, "${getString(R.string.download_failed)}: ${e.message}", Toast.LENGTH_LONG).show()
+                    resetOverwriteButton()
+                }
+            }
+        }.start()
+    }
+
+    private fun downloadFileDirect(urlString: String): File {
+        // 自动将 Gitee/GitHub 的 blob URL 转换为 raw URL
+        var normalizedUrl = urlString
+        if (normalizedUrl.contains("gitee.com/") && normalizedUrl.contains("/blob/")) {
+            normalizedUrl = normalizedUrl.replace("/blob/", "/raw/")
+        }
+        if (normalizedUrl.contains("github.com/") && normalizedUrl.contains("/blob/")) {
+            normalizedUrl = normalizedUrl.replace("/blob/", "/raw/")
+        }
+
+        val url = URL(normalizedUrl)
+        val conn = url.openConnection() as HttpURLConnection
+        conn.connectTimeout = 15000
+        conn.readTimeout = 30000
+        conn.instanceFollowRedirects = true
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+
+        // 手动处理重定向
+        val redirect = conn.getHeaderField("Location")
+        if (redirect != null && conn.responseCode in 300..399) {
+            conn.disconnect()
+            return downloadFileDirect(redirect)
+        }
+
+        if (conn.responseCode != 200) {
+            throw Exception("HTTP ${conn.responseCode}: ${conn.responseMessage}")
+        }
+
+        return conn.inputStream.use { input ->
+            val contentType = conn.contentType ?: ""
+            val isHtmlFile = urlString.endsWith(".html", ignoreCase = true) ||
+                           urlString.endsWith(".htm", ignoreCase = true)
+            val suffix = if (isHtmlFile) ".html" else ".zip"
+            val tempFile = File(cacheDir, "download_${System.currentTimeMillis()}$suffix")
+
+            tempFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+
+            // 验证下载内容
+            val headerBytes = ByteArray(500)
+            val bytesRead = tempFile.inputStream().use { it.read(headerBytes) }
+
+            if (bytesRead > 0) {
+                val headerText = String(headerBytes, 0, bytesRead, Charsets.UTF_8)
+
+                // 如果是 .zip 后缀但内容是 HTML，报错
+                if (suffix == ".zip" && headerText.trimStart().startsWith('<')) {
+                    if (!(headerBytes[0] == 0x50.toByte() && headerBytes[1] == 0x4B.toByte())) {
+                        tempFile.delete()
+                        throw Exception("下载的是 HTML 页面而非工具文件。请使用 raw 链接。")
+                    }
+                }
+
+                // 如果是 .html 后缀，检查是否是登录页面
+                if (suffix == ".html") {
+                    val isLoginPage = headerText.contains("meta http-equiv=\"refresh\"", true) ||
+                                    headerText.contains("location.href", true) ||
+                                    headerText.contains("gitee.com/login", true) ||
+                                    headerText.contains("需要登录", true) ||
+                                    headerText.contains("github.com/login", true)
+                    if (isLoginPage) {
+                        tempFile.delete()
+                        throw Exception("下载的是登录页面。Gitee raw 链接可能需要登录，请手动下载后导入。")
+                    }
+                }
+            }
+
+            tempFile
+        }
+    }
+
+    private fun startImportActivity(file: File, isOverwrite: Boolean) {
+        val intent = Intent(this, ImportActivity::class.java).apply {
+            data = android.net.Uri.fromFile(file)
+            if (isOverwrite) {
+                putExtra("overwrite_tool_id", toolId)
+            }
+            // 传递下载URL用于保存到manifest
+            currentTool?.downloadUrl?.let { url ->
+                if (url.isNotEmpty()) {
+                    putExtra("download_url", url)
+                }
+            }
+        }
+        startActivity(intent)
+        finish()
+    }
+
+    private fun resetOverwriteButton() {
+        isCheckingUpdate = false
+        btnOverwriteDownload.isEnabled = currentTool?.downloadUrl?.isNotEmpty() == true
+        btnOverwriteDownload.text = getString(R.string.overwrite_download)
+        btnCheckUpdate.isEnabled = currentTool?.downloadUrl?.isNotEmpty() == true
     }
 
     override fun onResume() {

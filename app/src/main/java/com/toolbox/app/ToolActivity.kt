@@ -198,23 +198,36 @@ class ToolActivity : AppCompatActivity() {
 
     private fun loadTool() {
         val indexFile = ToolDirectory(this).getToolIndexHtml(toolId)
-        android.util.Log.d("ToolActivity", "Loading tool: $toolId")
+        android.util.Log.d("ToolActivity", "========== LOADING TOOL: $toolId ==========")
         android.util.Log.d("ToolActivity", "Index path: ${indexFile.absolutePath}")
         android.util.Log.d("ToolActivity", "File exists: ${indexFile.exists()}")
 
         if (indexFile.exists()) {
             android.util.Log.d("ToolActivity", "File size: ${indexFile.length()} bytes")
-            binding.webview.loadUrl("file://${indexFile.absolutePath}")
+            // 读取文件前 500 字节查看实际内容
+            try {
+                val content = indexFile.readText().take(500)
+                android.util.Log.d("ToolActivity", "File content preview:\n$content")
+            } catch (e: Exception) {
+                android.util.Log.e("ToolActivity", "Failed to read file: ${e.message}")
+            }
+            val loadUrl = "file://${indexFile.absolutePath}"
+            android.util.Log.d("ToolActivity", "Loading URL: $loadUrl")
+            binding.webview.loadUrl(loadUrl)
         } else {
+            android.util.Log.e("ToolActivity", "ERROR: index.html DOES NOT EXIST!")
             // 列出目录内容帮助调试
             val dir = indexFile.parentFile
             if (dir != null && dir.exists()) {
-                android.util.Log.d("ToolActivity", "Dir contents:")
+                android.util.Log.d("ToolActivity", "Dir contents (${dir.absolutePath}):")
                 dir.listFiles()?.forEach { f ->
-                    android.util.Log.d("ToolActivity", "  - ${f.name} (${f.length()} bytes)")
+                    android.util.Log.d("ToolActivity", "  - ${f.name} (${f.length()} bytes, dir=${f.isDirectory})")
                 }
+            } else {
+                android.util.Log.e("ToolActivity", "Parent directory does not exist either!")
             }
         }
+        android.util.Log.d("ToolActivity", "===========================================")
     }
 
     override fun onBackPressed() {

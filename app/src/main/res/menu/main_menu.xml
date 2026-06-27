@@ -4,13 +4,17 @@
 
     <item
         android:id="@+id/action_import"
-        android:icon="@drawable/ic_add"
-        android:title="@string/import_tool"
-        app:showAsAction="always" />
+        android:title="@string/import_local"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_online_download"
         android:title="@string/online_download"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_repository"
+        android:title="@string/tool_repository"
         app:showAsAction="never" />
 
 </menu>

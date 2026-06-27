@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
+import com.toolbox.app.data.DownloadHistory
 import com.toolbox.app.data.ToolManager
 import com.toolbox.app.util.ZipUtils
 import java.io.File
@@ -25,6 +26,9 @@ class ImportActivity : AppCompatActivity() {
     private var selectedColorView: View? = null
     private val overwriteToolId: String? by lazy {
         intent.getStringExtra("overwrite_tool_id")
+    }
+    private val downloadUrl: String? by lazy {
+        intent.getStringExtra("download_url")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,16 +74,30 @@ class ImportActivity : AppCompatActivity() {
     private fun analyzeZipFile() {
         val uri = zipUri ?: return
 
-        // 从ContentResolver获取真实文件名
+        // 尝试获取真实文件名
         var fileName = "import"
-        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-            if (nameIndex >= 0 && cursor.moveToFirst()) {
-                fileName = cursor.getString(nameIndex) ?: "import"
+
+        // 先尝试 ContentResolver (content:// URI)
+        if (uri.scheme == "content") {
+            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (nameIndex >= 0 && cursor.moveToFirst()) {
+                    fileName = cursor.getString(nameIndex) ?: "import"
+                }
             }
+        } else if (uri.scheme == "file") {
+            // file:// URI：直接从路径获取
+            fileName = uri.lastPathSegment ?: "import"
         }
 
-        android.util.Log.d("ImportActivity", "Importing: $fileName")
+        android.util.Log.d("ImportActivity", "Importing: $fileName (scheme: ${uri.scheme})")
+
+        // 打开输入流（兼容 content:// 和 file://）
+        val inputStream = if (uri.scheme == "file") {
+            java.io.FileInputStream(uri.path ?: "")
+        } else {
+            contentResolver.openInputStream(uri)
+        }
 
         // 判断是单HTML文件还是ZIP包
         if (fileName.endsWith(".html", ignoreCase = true) ||
@@ -88,7 +106,7 @@ class ImportActivity : AppCompatActivity() {
             tempDir = File(cacheDir, "html_${System.currentTimeMillis()}").apply { mkdir() }
             val htmlFile = File(tempDir, "index.html")
 
-            contentResolver.openInputStream(uri)?.use { input ->
+            inputStream?.use { input ->
                 htmlFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
@@ -112,7 +130,7 @@ class ImportActivity : AppCompatActivity() {
             // ZIP包：正常解压
             val tempZip = File(cacheDir, "analyze_${System.currentTimeMillis()}.zip")
 
-            contentResolver.openInputStream(uri)?.use { input ->
+            inputStream?.use { input ->
                 tempZip.outputStream().use { output ->
                     input.copyTo(output)
                 }
@@ -121,6 +139,11 @@ class ImportActivity : AppCompatActivity() {
             tempDir = File(cacheDir, "analyze_${System.currentTimeMillis()}")
             ZipUtils.unzip(tempZip, tempDir!!).getOrThrow()
             tempZip.delete()
+
+            android.util.Log.d("ImportActivity", "ZIP extracted to: ${tempDir!!.absolutePath}")
+            tempDir!!.listFiles()?.forEach { f ->
+                android.util.Log.d("ImportActivity", "  - ${f.name}: ${f.length()} bytes")
+            }
 
             val manifestFile = File(tempDir!!, "manifest.json")
             hasManifest = manifestFile.exists()
@@ -189,12 +212,12 @@ class ImportActivity : AppCompatActivity() {
             name = htmlFiles[0].nameWithoutExtension
         }
 
-        // 短UUID：8位，工具唯一标识
-        val shortUuid = java.util.UUID.randomUUID().toString().substring(0, 8)
+        // 如果是覆盖安装模式，使用现有的工具ID，否则生成新ID
+        val toolId = overwriteToolId ?: java.util.UUID.randomUUID().toString().substring(0, 8)
 
         // 确保在主线程更新UI
         runOnUiThread {
-            findViewById<TextInputEditText>(R.id.input_tool_id).setText(shortUuid)
+            findViewById<TextInputEditText>(R.id.input_tool_id).setText(toolId)
             findViewById<TextInputEditText>(R.id.input_tool_name).setText(name)
             findViewById<TextInputEditText>(R.id.input_tool_version).setText("1.0.0")
         }
@@ -224,7 +247,8 @@ class ImportActivity : AppCompatActivity() {
 
         Thread {
             try {
-                val id = findViewById<TextInputEditText>(R.id.input_tool_id).text.toString().trim()
+                // 覆盖安装模式下强制使用原工具ID，不使用输入框的值
+                val id = overwriteToolId ?: findViewById<TextInputEditText>(R.id.input_tool_id).text.toString().trim()
                     .ifEmpty { findViewById<TextInputEditText>(R.id.input_tool_name).text.toString()
                         .lowercase().replace("\\W+".toRegex(), "-") }
                 val name = findViewById<TextInputEditText>(R.id.input_tool_name).text.toString().trim()
@@ -232,7 +256,8 @@ class ImportActivity : AppCompatActivity() {
                 val author = findViewById<TextInputEditText>(R.id.input_tool_author).text.toString().trim()
                 val desc = findViewById<TextInputEditText>(R.id.input_tool_desc).text.toString().trim()
 
-                // 生成 manifest.json
+                // 生成 manifest.json，包含下载链接（如果有）
+                val downloadUrlValue = downloadUrl ?: ""
                 val manifest = """
                     {
                         "id": "$id",
@@ -241,23 +266,48 @@ class ImportActivity : AppCompatActivity() {
                         "description": "$desc",
                         "author": "$author",
                         "icon": "",
-                        "iconColor": "$selectedColor"
+                        "iconColor": "$selectedColor",
+                        "downloadUrl": "$downloadUrlValue"
                     }
                 """.trimIndent()
 
                 File(tempDir!!, "manifest.json").writeText(manifest)
 
-                // 确保有 index.html
-                val htmlFiles = tempDir!!.listFiles { _, name -> name.endsWith(".html") }
+                // 确保有 index.html（单HTML导入时已经是 index.html 了）
+                android.util.Log.d("ImportActivity", "Before ensure index.html - tempDir files:")
+                tempDir!!.listFiles()?.forEach { f ->
+                    android.util.Log.d("ImportActivity", "  - ${f.name}: ${f.length()} bytes")
+                }
+
+                val htmlFiles = tempDir!!.listFiles { _, name ->
+                    name.endsWith(".html", true) || name.endsWith(".htm", true)
+                }
+                android.util.Log.d("ImportActivity", "Found ${htmlFiles?.size ?: 0} HTML files")
+
                 if (!htmlFiles.isNullOrEmpty()) {
-                    if (!File(tempDir!!, "index.html").exists()) {
-                        htmlFiles[0].renameTo(File(tempDir!!, "index.html"))
+                    val indexFile = File(tempDir!!, "index.html")
+                    if (!indexFile.exists()) {
+                        val sourceFile = htmlFiles.firstOrNull { it.name.equals("index.html", true) }
+                            ?: htmlFiles.firstOrNull()
+                        android.util.Log.d("ImportActivity", "Renaming ${sourceFile?.name} -> index.html")
+                        val renameResult = sourceFile?.renameTo(indexFile)
+                        android.util.Log.d("ImportActivity", "Rename result: $renameResult")
+                    } else {
+                        android.util.Log.d("ImportActivity", "index.html already exists: ${indexFile.length()} bytes")
                     }
+                } else {
+                    android.util.Log.e("ImportActivity", "NO HTML FILES FOUND IN TEMP DIR!")
                 }
 
                 // 移动到工具目录
                 val overwrite = !overwriteToolId.isNullOrEmpty()
                 ToolManager(this).installFromTempDir(tempDir!!, id, overwrite)
+
+                // 保存到下载历史
+                val url = downloadUrl
+                if (!url.isNullOrEmpty()) {
+                    DownloadHistory(this).addRecord(url, id, name, version)
+                }
 
                 runOnUiThread {
                     val message = if (overwrite) "更新成功: $name" else "导入成功: $name"

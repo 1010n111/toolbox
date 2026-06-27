@@ -9,6 +9,7 @@ import java.io.File
 class ToolManager(private val context: Context) {
 
     private val toolDir = ToolDirectory(context)
+    private val downloadHistory = DownloadHistory(context)
 
     fun listTools(): List<ToolInfo> {
         return toolDir.getAllToolDirs()
@@ -20,7 +21,7 @@ class ToolManager(private val context: Context) {
                     null
                 }
             }
-            .sortedByDescending { it.installedAt }
+            .sortedBy { it.name.lowercase() }
     }
 
     fun installTool(zipUri: Uri): Result<ToolInfo> {
@@ -150,11 +151,16 @@ class ToolManager(private val context: Context) {
 
     fun deleteTool(toolId: String): Boolean {
         val dir = toolDir.getToolDir(toolId)
-        return if (dir.exists()) {
+        val result = if (dir.exists()) {
             dir.deleteRecursively()
         } else {
             false
         }
+        // 删除工具时同时清除下载历史记录
+        if (result) {
+            downloadHistory.removeByToolId(toolId)
+        }
+        return result
     }
 
     fun getTool(toolId: String): ToolInfo? {

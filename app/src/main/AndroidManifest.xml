@@ -54,6 +54,11 @@
             android:name=".ToolDetailActivity"
             android:exported="false"
             android:label="@string/tool_detail" />
+
+        <activity
+            android:name=".RepositoryActivity"
+            android:exported="false"
+            android:label="@string/tool_repository" />
     </application>
 
 </manifest>

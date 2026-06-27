@@ -89,6 +89,10 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this, DownloadActivity::class.java))
                 true
             }
+            R.id.action_repository -> {
+                startActivity(Intent(this, RepositoryActivity::class.java))
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
