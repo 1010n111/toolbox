@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">ToolBox</string>
     <string name="import_tool">导入工具</string>
+    <string name="import_local">本地导入</string>
+    <string name="overwrite_download">覆盖下载</string>
     <string name="no_tools">暂无工具</string>
     <string name="tap_to_import">点击右上角 + 按钮导入工具</string>
     <string name="importing">正在导入...</string>
@@ -39,4 +41,19 @@
     <string name="details">详情</string>
     <string name="open_tool">打开</string>
     <string name="edit_tool">编辑</string>
+    <string name="tool_repository">工具仓库</string>
+    <string name="install">安装</string>
+    <string name="edit_repository">编辑仓库地址</string>
+    <string name="repo_url">仓库地址</string>
+    <string name="repo_url_hint">例如: https://github.com/user/repo</string>
+    <string name="repo_api_url">API 地址 (自动生成)</string>
+    <string name="repo_raw_base">Raw 文件地址 (自动生成)</string>
+    <string name="repository_updated">仓库地址已更新</string>
+    <string name="url_cannot_be_empty">地址不能为空</string>
+    <string name="reset_default">恢复默认</string>
+    <string name="reset_to_default">已恢复默认设置</string>
+    <string name="save">保存</string>
+    <string name="refresh">刷新</string>
+    <string name="already_installed">已安装</string>
+    <string name="reinstall">重新安装</string>
 </resources>
